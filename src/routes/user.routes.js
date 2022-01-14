@@ -19,9 +19,10 @@ router.post(
     console.log(process.env.REACT_APP_URL);
 
     if (!req.file) {
-      return next(new Error("Upload não conseguiu ser finalizado"));
+      return res.status(400).json({
+        msg: "Upload da foto do perfil não conseguiu ser finalizado",
+      });
     }
-
     console.log(req.file);
 
     return res.status(201).json({ url: req.file.path });
@@ -31,6 +32,19 @@ router.post(
 // Definindo nossos route listeners
 router.post("/signup", (req, res, next) => {
   const { name, email, password, pictureUrl } = req.body;
+
+  UserModel.findOne({ email })
+    .then((result) => {
+      if (result) {
+        return res
+          .status(400)
+          .json({ msg: "Este email já está cadastrado em nosso serviço" });
+      }
+    })
+    .catch((err) => {
+      console.error(err);
+      return next(err);
+    });
 
   // Verifica se a senha recebida é fraca
   if (
@@ -57,7 +71,7 @@ router.post("/signup", (req, res, next) => {
     })
     .catch((err) => {
       console.error(err);
-      return next(err);
+      return next({ msg: "erro" });
     });
 });
 
@@ -83,7 +97,7 @@ router.post("/login", (req, res, next) => {
           .status(200)
           .json({ token, user: { _id, name, email, pictureUrl } });
       } else {
-        return res.status(400).json({ msg: "E-mail ou senha errado" });
+        return res.status(400).json({ msg: "Senha inválida" });
       }
     })
     .catch((err) => {
